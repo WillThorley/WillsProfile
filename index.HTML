@@ -1,1 +1,274 @@
+# Will Thorley — GitHub Pages Personal Profile (Boston Advantage 2012 Elites)
 
+This repo contains a ready-to-deploy GitHub Pages site that shows a profile in the corner (profile picture + name "Will Thorley") and a team section that displays the Boston Advantage 2012 Elites **wins / losses / ties** and **future schedule** pulled from the Elite 9 Hockey schedule page you provided.
+
+---
+
+## What I included (files)
+
+Below are the files included. Copy them into your repo's root (or commit directly) and enable GitHub Pages from the `main` or `gh-pages` branch.
+
+### `index.html`
+
+```html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Will Thorley — Profile</title>
+  <link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+  <header class="corner-profile">
+    <!-- Put your profile image at /assets/profile.jpg -->
+    <img id="profilePic" src="/assets/profile.jpg" alt="Will Thorley" />
+    <div id="profileName">Will Thorley</div>
+  </header>
+
+  <main class="container">
+    <section class="intro">
+      <h1>Will Thorley</h1>
+      <p>Player / Coach for <strong>Boston Advantage 2012 Elites</strong>. This page pulls schedule & results from Elite 9 Hockey and shows wins / losses / ties and upcoming games.</p>
+    </section>
+
+    <section id="team-stats" class="card">
+      <h2>Boston Advantage 2012 Elites — Season Summary</h2>
+      <div class="stats-grid">
+        <div><strong>Wins</strong><div id="wins">—</div></div>
+        <div><strong>Losses</strong><div id="losses">—</div></div>
+        <div><strong>Ties</strong><div id="ties">—</div></div>
+      </div>
+      <h3>Upcoming / Future Schedule</h3>
+      <table id="schedule-table">
+        <thead><tr><th>Date</th><th>Opponent</th><th>Location / Rink</th><th>Time</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr><td colspan="5">Loading schedule...</td></tr>
+        </tbody>
+      </table>
+      <p class="source-note">Data source: Elite 9 Hockey — <a href="https://www.elite9hockey.com/pages/schedules/boys-2025-26-schedule/" target="_blank" rel="noopener">boys 2025-26 schedule</a></p>
+    </section>
+  </main>
+
+  <script src="/assets/script.js"></script>
+</body>
+</html>
+```
+
+---
+
+### `assets/style.css`
+
+```css
+:root{--bg:#f6f8fb;--card:#fff;--accent:#0b63d6;--muted:#6b7280}
+*{box-sizing:border-box}
+body{font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:#111;margin:0;padding:0}
+.corner-profile{position:fixed;top:12px;right:12px;display:flex;align-items:center;gap:8px;z-index:20}
+.corner-profile img{width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid rgba(0,0,0,0.08)}
+.corner-profile #profileName{font-weight:600}
+.container{max-width:980px;margin:90px auto;padding:24px}
+.card{background:var(--card);padding:18px;border-radius:12px;box-shadow:0 6px 18px rgba(15,23,42,0.06);margin-bottom:18px}
+.intro h1{margin:0 0 6px 0}
+.stats-grid{display:flex;gap:18px;justify-content:flex-start;margin:12px 0}
+.stats-grid>div{background:linear-gradient(180deg,#fff,#fbfdff);padding:12px;border-radius:8px;min-width:90px;text-align:center}
+#schedule-table{width:100%;border-collapse:collapse;margin-top:12px}
+#schedule-table th,#schedule-table td{padding:8px;border-bottom:1px solid #eef2f7;text-align:left}
+.source-note{font-size:13px;color:var(--muted);margin-top:8px}
+```
+
+---
+
+### `assets/script.js`
+
+```js
+/*
+Client-side UI script. This static site reads a pre-built JSON file at /data/boston_advantage_2012.json
+which is created by the GitHub Actions workflow `fetch-schedule.yml` (see below). If the JSON is not present,
+this script will show a friendly message.
+*/
+
+async function loadData(){
+  const winsEl = document.getElementById('wins');
+  const lossesEl = document.getElementById('losses');
+  const tiesEl = document.getElementById('ties');
+  const tableBody = document.querySelector('#schedule-table tbody');
+
+  try{
+    const res = await fetch('/data/boston_advantage_2012.json', {cache: 'no-store'});
+    if(!res.ok) throw new Error('No data file');
+    const data = await res.json();
+
+    winsEl.textContent = data.summary.wins;
+    lossesEl.textContent = data.summary.losses;
+    tiesEl.textContent = data.summary.ties;
+
+    tableBody.innerHTML = '';
+    if(data.games && data.games.length){
+      data.games.forEach(g=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${g.date || ''}</td><td>${g.opponent || ''}</td><td>${g.location || ''}</td><td>${g.time || ''}</td><td>${g.result || ''}</td>`;
+        tableBody.appendChild(tr);
+      })
+    } else {
+      tableBody.innerHTML = '<tr><td colspan="5">No upcoming games found.</td></tr>';
+    }
+  }catch(err){
+    tableBody.innerHTML = '<tr><td colspan="5">Schedule data not found. The repository includes a workflow to fetch it. See README.</td></tr>';
+    winsEl.textContent = '-';
+    lossesEl.textContent = '-';
+    tiesEl.textContent = '-';
+    console.warn(err);
+  }
+}
+
+loadData();
+```
+
+---
+
+### `scripts/fetch_schedule.py` (used by GitHub Actions)
+
+```python
+# This script fetches the Elite9 schedule page and attempts to extract games for "Boston Advantage" (2012 team).
+# It outputs a JSON file at ./docs/data/boston_advantage_2012.json suitable for GitHub Pages.
+
+import requests
+from bs4 import BeautifulSoup
+import json
+import re
+from datetime import datetime
+
+URL = 'https://www.elite9hockey.com/pages/schedules/boys-2025-26-schedule/'
+OUT_PATH = 'docs/data/boston_advantage_2012.json'
+TEAM_KEYWORDS = ['Boston Advantage', 'Boston Advantage 2012', 'Boston Advantage 2012 Elite', 'Boston Advantage 2012 Elites']
+
+print('Fetching', URL)
+r = requests.get(URL, timeout=20)
+if r.status_code != 200:
+    raise SystemExit('Failed to fetch schedules page: ' + str(r.status_code))
+
+soup = BeautifulSoup(r.text, 'html.parser')
+text = soup.get_text('\n')
+
+# A simple approach: find lines mentioning 'Boston Advantage' and try to parse nearby text for date/opponent/result.
+lines = [l.strip() for l in text.splitlines() if l.strip()]
+
+candidate_lines = [l for l in lines if any(k in l for k in TEAM_KEYWORDS)]
+print(f'Found {len(candidate_lines)} candidate lines mentioning the team')
+
+games = []
+for line in candidate_lines:
+    # Attempt to capture date (e.g., Mon 1/12 or Jan 12) and opponent and result like W · 3-1 or L · 2-4
+    # This is heuristic — Elite9 sometimes includes short lines like "Sun 1/12. 9:30 AM. Edge - Upper. W · 3-1. Completed"
+    # We'll look back and forward few lines to assemble a full record.
+    idx = lines.index(line)
+    window = ' '.join(lines[max(0, idx-3): idx+4])
+    # date regex
+    date_match = re.search(r'([A-Za-z]{3,9}\s*\d{1,2}/\d{1,2}|[A-Za-z]{3,9}\s+\d{1,2})', window)
+    time_match = re.search(r'(\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)?)', window)
+    result_match = re.search(r'([WL]\s*·\s*\d+-\d+|W\s*·\s*\d+-\d+|L\s*·\s*\d+-\d+|T\s*·\s*\d+-\d+|TIE|Tie)', window)
+    opponent_match = None
+    # opponent often appears as a team name after the time or rink; capture a fragment that contains a dash or 'vs' or similar
+    opp = ''
+    m = re.search(r'(vs\.?\s*[^.\n]+|v\.?\s*[^.\n]+|\.\s*([^\d]+?)\.|-\s*([^\d]+?)\.)', window)
+    if m:
+        opp = (m.group(0)).strip()
+
+    g = {
+        'raw': window,
+        'date': date_match.group(0) if date_match else '',
+        'time': time_match.group(0) if time_match else '',
+        'opponent': opp,
+        'result': result_match.group(0).replace('·','').strip() if result_match else ''
+    }
+    games.append(g)
+
+# Basic win/loss/tie counts from results
+wins = sum(1 for g in games if g.get('result','').upper().startswith('W'))
+losses = sum(1 for g in games if g.get('result','').upper().startswith('L'))
+ties = sum(1 for g in games if g.get('result','').upper().startswith('T'))
+
+out = {
+    'source': URL,
+    'fetched_at': datetime.utcnow().isoformat()+'Z',
+    'summary': {'wins': wins, 'losses': losses, 'ties': ties},
+    'games': games
+}
+
+import os
+os.makedirs(os.path.dirname(OUT_PATH), exist_ok=True)
+with open(OUT_PATH, 'w') as f:
+    json.dump(out, f, indent=2)
+
+print('Wrote', OUT_PATH)
+```
+
+---
+
+### `.github/workflows/fetch-schedule.yml`
+
+```yaml
+name: Fetch Elite9 schedule
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 8 * * *' # daily fetch at 08:00 UTC (optional)
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4
+      - name: Run fetch script
+        run: |
+          python scripts/fetch_schedule.py
+      - name: Commit generated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/data/boston_advantage_2012.json || true
+          git commit -m "Update Boston Advantage 2012 schedule data" || echo "no changes"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+---
+
+## How this works
+
+1. The GitHub Action fetches the Elite 9 schedule page and runs a small Python parsing script that extracts lines mentioning **Boston Advantage** and outputs a JSON file at `docs/data/boston_advantage_2012.json`.
+2. GitHub Pages serves the site from the `docs/` folder. The static site (`index.html`) fetches the generated JSON and displays the win/loss/tie counts plus the upcoming games.
+
+**Notes & limitations**
+
+* The Elite 9 site uses different templates and sometimes dynamic content; the parser is intentionally conservative (heuristic). It should catch many schedule lines but may need tuning if the site structure changes. If you want a more robust parser I can improve it to target the exact HTML elements (but that requires confirming the exact team page structure).
+* If you prefer client-only (no workflow), I can provide an approach using a public CORS proxy — but build-time fetching (the workflow) is more reliable and cleaner for GitHub Pages.
+
+---
+
+## What you need to do
+
+1. Create a new GitHub repo (or use an existing one).
+2. Copy these files into the repo. Make sure `index.html` is at the repo root and the `docs/` folder exists (the workflow writes into `docs/data/`).
+3. Add your profile picture at `assets/profile.jpg` (the corner image) and commit.
+4. Commit and push. Manually run the workflow once from Actions > workflow > Run workflow (or wait for the scheduled run). It will create `docs/data/boston_advantage_2012.json`.
+5. In your repo Settings → Pages, set the source to `gh-pages` or `main` branch `/docs` folder depending on your branch. The `index.html` in the repo root will be served from `docs/` if you copy it into `docs/index.html` instead; alternatively, move the site files into `docs/` so GitHub Pages serves them.
+
+If you'd like, I can now:
+
+* convert this to a single-file `docs/index.html` that contains the CSS and JS inline and skip the workflow (but then you need to manually paste the JSON or use a CORS proxy), OR
+* tweak the Python parser to target the exact team roster page if you can point to the team-specific page or share a sample of the schedule HTML.
+
+---
+
+Happy to customize colors, layout, or add contact / links to your GitHub profile. Commit these files and your site will be ready to host on GitHub Pages.
