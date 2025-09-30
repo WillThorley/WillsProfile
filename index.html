@@ -2,15 +2,12 @@
 
 This repo contains a ready-to-deploy GitHub Pages site that shows a profile in the corner (profile picture + name "Will Thorley") and a team section that displays the Boston Advantage 2012 Elites **wins / losses / ties** and **future schedule** pulled from the Elite 9 Hockey schedule page you provided.
 
----
 
 ## What I included (files)
 
 Below are the files included. Copy them into your repo's root (or commit directly) and enable GitHub Pages from the `main` or `gh-pages` branch.
 
-### `index.html`
 
-```html
 <!doctype html>
 <html lang="en">
 <head>
@@ -53,13 +50,9 @@ Below are the files included. Copy them into your repo's root (or commit directl
   <script src="/assets/script.js"></script>
 </body>
 </html>
-```
 
----
 
-### `assets/style.css`
 
-```css
 :root{--bg:#f6f8fb;--card:#fff;--accent:#0b63d6;--muted:#6b7280}
 *{box-sizing:border-box}
 body{font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:#111;margin:0;padding:0}
@@ -74,13 +67,8 @@ body{font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:#11
 #schedule-table{width:100%;border-collapse:collapse;margin-top:12px}
 #schedule-table th,#schedule-table td{padding:8px;border-bottom:1px solid #eef2f7;text-align:left}
 .source-note{font-size:13px;color:var(--muted);margin-top:8px}
-```
 
----
 
-### `assets/script.js`
-
-```js
 /*
 Client-side UI script. This static site reads a pre-built JSON file at /data/boston_advantage_2012.json
 which is created by the GitHub Actions workflow `fetch-schedule.yml` (see below). If the JSON is not present,
@@ -122,13 +110,13 @@ async function loadData(){
 }
 
 loadData();
-```
 
----
 
-### `scripts/fetch_schedule.py` (used by GitHub Actions)
 
-```python
+
+
+
+
 # This script fetches the Elite9 schedule page and attempts to extract games for "Boston Advantage" (2012 team).
 # It outputs a JSON file at ./docs/data/boston_advantage_2012.json suitable for GitHub Pages.
 
@@ -201,13 +189,11 @@ with open(OUT_PATH, 'w') as f:
     json.dump(out, f, indent=2)
 
 print('Wrote', OUT_PATH)
-```
 
----
 
-### `.github/workflows/fetch-schedule.yml`
 
-```yaml
+
+
 name: Fetch Elite9 schedule
 
 on:
@@ -240,9 +226,7 @@ jobs:
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-```
 
----
 
 ## How this works
 
@@ -253,7 +237,6 @@ jobs:
 * The Elite 9 site uses different templates and sometimes dynamic content; the parser is intentionally conservative (heuristic). It should catch many schedule lines but may need tuning if the site structure changes. If you want a more robust parser I can improve it to target the exact HTML elements (but that requires confirming the exact team page structure).
 * If you prefer client-only (no workflow), I can provide an approach using a public CORS proxy — but build-time fetching (the workflow) is more reliable and cleaner for GitHub Pages.
 
----
 
 ## What you need to do
 
@@ -268,7 +251,7 @@ If you'd like, I can now:
 * convert this to a single-file `docs/index.html` that contains the CSS and JS inline and skip the workflow (but then you need to manually paste the JSON or use a CORS proxy), OR
 * tweak the Python parser to target the exact team roster page if you can point to the team-specific page or share a sample of the schedule HTML.
 
----
+
 
 Happy to customize colors, layout, or add contact / links to your GitHub profile. Commit these files and your site will be ready to host on GitHub Pages.
 
