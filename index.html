@@ -5,59 +5,47 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Will Thorley — Profile</title>
   <style>
-    :root {
-      --bg: #0b63d6;
-      --card: #fff;
-      --muted: #f0f0f0;
+    :root{
+      --bg:#0b63d6; /* blue background */
+      --card:#fff;
+      --muted:#f0f0f0;
     }
-    * { box-sizing: border-box; }
-    body {
-      font-family: Inter, system-ui, Arial, sans-serif;
-      background: var(--bg);
-      color: #fff;
-      margin: 0;
-      padding: 0;
+    *{box-sizing:border-box}
+    body{
+      font-family:Inter,system-ui,Arial,sans-serif;
+      background:var(--bg);
+      color:#fff;
+      margin:0;
+      padding:0;
     }
-    .corner-profile {
-      position: fixed; top: 12px; right: 12px;
-      display: flex; align-items: center; gap: 8px;
-      z-index: 20;
+    .corner-profile{
+      position:fixed;top:12px;right:12px;
+      display:flex;align-items:center;gap:8px;z-index:20
     }
-    .corner-profile img {
-      width: 56px; height: 56px; border-radius: 50%;
-      object-fit: cover; border: 2px solid rgba(255,255,255,0.6);
+    .corner-profile img{
+      width:56px;height:56px;border-radius:50%;object-fit:cover;
+      border:2px solid rgba(255,255,255,0.6)
     }
-    .corner-profile #profileName { font-weight: 600; }
-    .container { max-width: 980px; margin: 90px auto; padding: 24px; }
-    .card {
-      background: var(--card);
-      color: #000;
-      padding: 18px; border-radius: 12px;
-      box-shadow: 0 6px 18px rgba(15,23,42,0.2);
-      margin-bottom: 18px;
+    .corner-profile #profileName{font-weight:600}
+    .container{max-width:980px;margin:90px auto;padding:24px}
+    .card{
+      background:var(--card);color:#000;
+      padding:18px;border-radius:12px;
+      box-shadow:0 6px 18px rgba(15,23,42,0.2);
+      margin-bottom:18px
     }
-    .intro h1 { margin: 0 0 6px 0; }
-    .stats-grid {
-      display: flex; gap: 18px; margin: 12px 0;
+    .intro h1{margin:0 0 6px 0}
+    .stats-grid{display:flex;gap:18px;margin:12px 0}
+    .stats-grid>div{
+      background:#f9fafb;
+      padding:12px;border-radius:8px;
+      min-width:90px;text-align:center
     }
-    .stats-grid > div {
-      background: #f9fafb; padding: 12px; border-radius: 8px;
-      min-width: 90px; text-align: center;
+    #schedule-table{width:100%;border-collapse:collapse;margin-top:12px}
+    #schedule-table th,#schedule-table td{
+      padding:8px;border-bottom:1px solid #ddd;text-align:left
     }
-    #schedule-table {
-      width: 100%; border-collapse: collapse; margin-top: 12px;
-    }
-    #schedule-table th, #schedule-table td {
-      padding: 8px; border-bottom: 1px solid #ddd; text-align: left;
-    }
-    .logo-container {
-      text-align: center;
-      margin-bottom: 24px;
-    }
-    .logo-container img {
-      max-width: 200px;
-      height: auto;
-    }
+    .source-note{font-size:13px;color:#333;margin-top:8px}
   </style>
 </head>
 <body>
@@ -67,24 +55,19 @@
   </header>
 
   <main class="container">
-    <!-- Team Logo -->
-    <div class="logo-container">
-      <img src="assets/logo.png" alt="Boston Advantage Logo" />
-    </div>
-
     <section class="intro">
       <h1>Will Thorley</h1>
-      <p>Player / Coach for <strong>Boston Advantage 2012 Elite</strong>. This page shows wins / losses / ties and past games.</p>
+      <p>Player / Coach for <strong>Boston Advantage 2012 Elite</strong>. This page shows wins / losses / ties and upcoming games.</p>
     </section>
 
     <section id="team-stats" class="card">
       <h2>Boston Advantage 2012 Elite — Season Summary</h2>
       <div class="stats-grid">
-        <div><strong>Wins</strong><div id="wins">X</div></div>
-        <div><strong>Losses</strong><div id="losses">Y</div></div>
-        <div><strong>Ties</strong><div id="ties">Z</div></div>
+        <div><strong>Wins</strong><div id="wins">2</div></div>
+        <div><strong>Losses</strong><div id="losses">1</div></div>
+        <div><strong>Ties</strong><div id="ties">2</div></div>
       </div>
-      <h3>Past Games (Results)</h3>
+      <h3>Upcoming / Future Schedule</h3>
       <table id="schedule-table">
         <thead>
           <tr>
@@ -92,18 +75,29 @@
           </tr>
         </thead>
         <tbody>
-          <!-- Replace with real games -->
           <tr>
-            <td>Oct 1, 2025</td><td>Team A</td><td>Arena X</td><td>9:00 AM</td><td style="color:green">W</td>
+            <td>Sun, Oct 5, 2025</td><td>Valley Jr. Warriors (Elite)</td><td>Pilgrim Ice Arena</td><td>10:40 AM</td><td>—</td>
           </tr>
           <tr>
-            <td>Oct 8, 2025</td><td>Team B</td><td>Arena Y</td><td>11:00 AM</td><td style="color:red">L</td>
+            <td>Sun, Oct 19, 2025</td><td>NH Avalanche</td><td>Ice Den Arena</td><td>1:20 PM</td><td>—</td>
           </tr>
           <tr>
-            <td>Oct 15, 2025</td><td>Team C</td><td>Arena Z</td><td>1:00 PM</td><td style="color:gray">T</td>
+            <td>Sat, Oct 25, 2025</td><td>Greater Boston Jr. Bruins</td><td>Pilgrim A</td><td>9:20 AM</td><td>—</td>
+          </tr>
+          <tr>
+            <td>Sun, Nov 2, 2025</td><td>East Coast Wizards</td><td>The Edge Sports Center</td><td>12:30 PM</td><td>—</td>
+          </tr>
+          <tr>
+            <td>Sat, Nov 15, 2025</td><td>Jr. Railers</td><td>Pilgrim B</td><td>11:10 AM</td><td>—</td>
           </tr>
         </tbody>
       </table>
+      <p class="source-note">
+        Data source: Elite 9 Hockey — 
+        <a href="https://www.elite9hockey.com/pages/schedules/boys-2025-26-schedule/" target="_blank" rel="noopener">
+          boys 2025-26 schedule
+        </a>
+      </p>
     </section>
   </main>
 </body>
