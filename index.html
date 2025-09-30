@@ -67,7 +67,7 @@
     <section class="card">
       <h2>Mini Hockey Game 🏒</h2>
       <canvas id="gameCanvas" width="600" height="400"></canvas>
-      <p style="text-align:center;">Use arrow keys to move your player and push the puck into the goal!</p>
+      <p style="text-align:center;">Arrow keys to move. Spacebar to shoot!</p>
     </section>
   </main>
 
@@ -76,10 +76,10 @@
     const ctx = canvas.getContext("2d");
 
     // Player
-    const player = { x: 100, y: 200, w: 30, h: 30, color: "blue", speed: 4 };
+    const player = { x: 100, y: 200, r: 18, color: "blue", speed: 4, dir: 0 };
 
     // Puck
-    const puck = { x: 300, y: 200, r: 12, dx: 0, dy: 0 };
+    const puck = { x: 300, y: 200, r: 10, dx: 0, dy: 0 };
 
     // Goal
     const goal = { x: 550, y: 150, w: 40, h: 100 };
@@ -91,34 +91,45 @@
     document.addEventListener("keyup", e => keys[e.key] = false);
 
     function update() {
-      // Move player
-      if(keys["ArrowUp"]) player.y -= player.speed;
-      if(keys["ArrowDown"]) player.y += player.speed;
-      if(keys["ArrowLeft"]) player.x -= player.speed;
-      if(keys["ArrowRight"]) player.x += player.speed;
+      // Movement
+      if(keys["ArrowUp"]) { player.y -= player.speed; player.dir = -Math.PI/2; }
+      if(keys["ArrowDown"]) { player.y += player.speed; player.dir = Math.PI/2; }
+      if(keys["ArrowLeft"]) { player.x -= player.speed; player.dir = Math.PI; }
+      if(keys["ArrowRight"]) { player.x += player.speed; player.dir = 0; }
 
       // Keep inside canvas
-      player.x = Math.max(0, Math.min(canvas.width - player.w, player.x));
-      player.y = Math.max(0, Math.min(canvas.height - player.h, player.y));
+      player.x = Math.max(player.r, Math.min(canvas.width - player.r, player.x));
+      player.y = Math.max(player.r, Math.min(canvas.height - player.r, player.y));
 
-      // Collision with puck
-      const dx = (player.x + player.w/2) - puck.x;
-      const dy = (player.y + player.h/2) - puck.y;
+      // Collision with puck (soft push)
+      const dx = player.x - puck.x;
+      const dy = player.y - puck.y;
       const dist = Math.sqrt(dx*dx + dy*dy);
-
-      if(dist < player.w/2 + puck.r) {
-        // push puck
+      if(dist < player.r + puck.r) {
         puck.dx = -dx * 0.1;
         puck.dy = -dy * 0.1;
+      }
+
+      // Shooting
+      if(keys[" "]) { // spacebar
+        const stickX = player.x + Math.cos(player.dir) * 30;
+        const stickY = player.y + Math.sin(player.dir) * 30;
+        const sdx = puck.x - stickX;
+        const sdy = puck.y - stickY;
+        const sdist = Math.sqrt(sdx*sdx + sdy*sdy);
+        if(sdist < 20) {
+          puck.dx = Math.cos(player.dir) * 6;
+          puck.dy = Math.sin(player.dir) * 6;
+        }
       }
 
       // Move puck
       puck.x += puck.dx;
       puck.y += puck.dy;
-      puck.dx *= 0.95; // friction
-      puck.dy *= 0.95;
+      puck.dx *= 0.98; // friction
+      puck.dy *= 0.98;
 
-      // Keep puck inside canvas
+      // Bounce off walls
       if(puck.x - puck.r < 0 || puck.x + puck.r > canvas.width) puck.dx *= -1;
       if(puck.y - puck.r < 0 || puck.y + puck.r > canvas.height) puck.dy *= -1;
 
@@ -137,8 +148,18 @@
       ctx.fillRect(goal.x, goal.y, goal.w, goal.h);
 
       // Player
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, player.r, 0, Math.PI*2);
       ctx.fillStyle = player.color;
-      ctx.fillRect(player.x, player.y, player.w, player.h);
+      ctx.fill();
+
+      // Stick
+      ctx.strokeStyle = "brown";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(player.x, player.y);
+      ctx.lineTo(player.x + Math.cos(player.dir) * 30, player.y + Math.sin(player.dir) * 30);
+      ctx.stroke();
 
       // Puck
       ctx.beginPath();
