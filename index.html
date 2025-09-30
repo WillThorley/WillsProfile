@@ -249,7 +249,6 @@ jobs:
 1. The GitHub Action fetches the Elite 9 schedule page and runs a small Python parsing script that extracts lines mentioning **Boston Advantage** and outputs a JSON file at `docs/data/boston_advantage_2012.json`.
 2. GitHub Pages serves the site from the `docs/` folder. The static site (`index.html`) fetches the generated JSON and displays the win/loss/tie counts plus the upcoming games.
 
-**Notes & limitations**
 
 * The Elite 9 site uses different templates and sometimes dynamic content; the parser is intentionally conservative (heuristic). It should catch many schedule lines but may need tuning if the site structure changes. If you want a more robust parser I can improve it to target the exact HTML elements (but that requires confirming the exact team page structure).
 * If you prefer client-only (no workflow), I can provide an approach using a public CORS proxy — but build-time fetching (the workflow) is more reliable and cleaner for GitHub Pages.
@@ -272,6 +271,4 @@ If you'd like, I can now:
 ---
 
 Happy to customize colors, layout, or add contact / links to your GitHub profile. Commit these files and your site will be ready to host on GitHub Pages.
---- ### `assets/style.css`
-```css
-...
+
