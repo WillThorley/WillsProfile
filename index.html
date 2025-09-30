@@ -8,7 +8,6 @@
     :root{
       --bg:#0b63d6; /* blue background */
       --card:#fff;
-      --muted:#f0f0f0;
     }
     *{box-sizing:border-box}
     body{
@@ -41,11 +40,7 @@
       padding:12px;border-radius:8px;
       min-width:90px;text-align:center
     }
-    #schedule-table{width:100%;border-collapse:collapse;margin-top:12px}
-    #schedule-table th,#schedule-table td{
-      padding:8px;border-bottom:1px solid #ddd;text-align:left
-    }
-    .source-note{font-size:13px;color:#333;margin-top:8px}
+    canvas{background:#eaf6ff;display:block;margin:0 auto;border:2px solid #000}
   </style>
 </head>
 <body>
@@ -57,7 +52,7 @@
   <main class="container">
     <section class="intro">
       <h1>Will Thorley</h1>
-      <p>Player / Coach for <strong>Boston Advantage 2012 Elite</strong>. This page shows wins / losses / ties and upcoming games.</p>
+      <p>Player / Coach for <strong>Boston Advantage 2012 Elite</strong>. This page shows wins / losses / ties.</p>
     </section>
 
     <section id="team-stats" class="card">
@@ -67,38 +62,102 @@
         <div><strong>Losses</strong><div id="losses">1</div></div>
         <div><strong>Ties</strong><div id="ties">2</div></div>
       </div>
-      <h3>Upcoming / Future Schedule</h3>
-      <table id="schedule-table">
-        <thead>
-          <tr>
-            <th>Date</th><th>Opponent</th><th>Location / Rink</th><th>Time</th><th>Result</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Sun, Oct 5, 2025</td><td>Valley Jr. Warriors (Elite)</td><td>Pilgrim Ice Arena</td><td>10:40 AM</td><td>—</td>
-          </tr>
-          <tr>
-            <td>Sun, Oct 19, 2025</td><td>NH Avalanche</td><td>Ice Den Arena</td><td>1:20 PM</td><td>—</td>
-          </tr>
-          <tr>
-            <td>Sat, Oct 25, 2025</td><td>Greater Boston Jr. Bruins</td><td>Pilgrim A</td><td>9:20 AM</td><td>—</td>
-          </tr>
-          <tr>
-            <td>Sun, Nov 2, 2025</td><td>East Coast Wizards</td><td>The Edge Sports Center</td><td>12:30 PM</td><td>—</td>
-          </tr>
-          <tr>
-            <td>Sat, Nov 15, 2025</td><td>Jr. Railers</td><td>Pilgrim B</td><td>11:10 AM</td><td>—</td>
-          </tr>
-        </tbody>
-      </table>
-      <p class="source-note">
-        Data source: Elite 9 Hockey — 
-        <a href="https://www.elite9hockey.com/pages/schedules/boys-2025-26-schedule/" target="_blank" rel="noopener">
-          boys 2025-26 schedule
-        </a>
-      </p>
+    </section>
+
+    <section class="card">
+      <h2>Mini Hockey Game 🏒</h2>
+      <canvas id="gameCanvas" width="600" height="400"></canvas>
+      <p style="text-align:center;">Use arrow keys to move your player and push the puck into the goal!</p>
     </section>
   </main>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    // Player
+    const player = { x: 100, y: 200, w: 30, h: 30, color: "blue", speed: 4 };
+
+    // Puck
+    const puck = { x: 300, y: 200, r: 12, dx: 0, dy: 0 };
+
+    // Goal
+    const goal = { x: 550, y: 150, w: 40, h: 100 };
+
+    // Keys
+    const keys = {};
+
+    document.addEventListener("keydown", e => keys[e.key] = true);
+    document.addEventListener("keyup", e => keys[e.key] = false);
+
+    function update() {
+      // Move player
+      if(keys["ArrowUp"]) player.y -= player.speed;
+      if(keys["ArrowDown"]) player.y += player.speed;
+      if(keys["ArrowLeft"]) player.x -= player.speed;
+      if(keys["ArrowRight"]) player.x += player.speed;
+
+      // Keep inside canvas
+      player.x = Math.max(0, Math.min(canvas.width - player.w, player.x));
+      player.y = Math.max(0, Math.min(canvas.height - player.h, player.y));
+
+      // Collision with puck
+      const dx = (player.x + player.w/2) - puck.x;
+      const dy = (player.y + player.h/2) - puck.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+
+      if(dist < player.w/2 + puck.r) {
+        // push puck
+        puck.dx = -dx * 0.1;
+        puck.dy = -dy * 0.1;
+      }
+
+      // Move puck
+      puck.x += puck.dx;
+      puck.y += puck.dy;
+      puck.dx *= 0.95; // friction
+      puck.dy *= 0.95;
+
+      // Keep puck inside canvas
+      if(puck.x - puck.r < 0 || puck.x + puck.r > canvas.width) puck.dx *= -1;
+      if(puck.y - puck.r < 0 || puck.y + puck.r > canvas.height) puck.dy *= -1;
+
+      // Goal detection
+      if(puck.x + puck.r > goal.x && puck.y > goal.y && puck.y < goal.y + goal.h) {
+        alert("GOAL! 🥅🏒");
+        reset();
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Goal
+      ctx.fillStyle = "red";
+      ctx.fillRect(goal.x, goal.y, goal.w, goal.h);
+
+      // Player
+      ctx.fillStyle = player.color;
+      ctx.fillRect(player.x, player.y, player.w, player.h);
+
+      // Puck
+      ctx.beginPath();
+      ctx.arc(puck.x, puck.y, puck.r, 0, Math.PI*2);
+      ctx.fillStyle = "black";
+      ctx.fill();
+    }
+
+    function reset() {
+      player.x = 100; player.y = 200;
+      puck.x = 300; puck.y = 200; puck.dx = 0; puck.dy = 0;
+    }
+
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+    loop();
+  </script>
 </body>
 </html>
