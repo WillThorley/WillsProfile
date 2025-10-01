@@ -41,6 +41,7 @@
       min-width:90px;text-align:center
     }
     canvas{background:#eaf6ff;display:block;margin:0 auto;border:2px solid #000}
+    .game-help {text-align:center;color:#fff;margin-top:8px}
   </style>
 </head>
 <body>
@@ -65,112 +66,214 @@
     </section>
 
     <section class="card">
-      <h2>Mini Hockey Game 🏒</h2>
-      <canvas id="gameCanvas" width="600" height="400"></canvas>
-      <p style="text-align:center;">Arrow keys to move. Spacebar to shoot!</p>
+      <h2>Mini Hockey Game — Stick Figure</h2>
+      <canvas id="gameCanvas" width="700" height="420" aria-label="Mini hockey game"></canvas>
+      <p class="game-help">Move with arrow keys. Press <strong>Space</strong> to shoot when the puck is near your stick.</p>
     </section>
   </main>
 
   <script>
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
+    // Canvas + context
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
 
-    // Player
-    const player = { x: 100, y: 200, r: 18, color: "blue", speed: 4, dir: 0 };
+    // Skater (stick figure) state
+    const player = {
+      x: 120,
+      y: canvas.height / 2,
+      speed: 4,
+      dir: 0, // angle in radians (0 = right)
+      facing: 'right' // track last direction for stick orientation
+    };
 
     // Puck
-    const puck = { x: 300, y: 200, r: 10, dx: 0, dy: 0 };
+    const puck = {
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      r: 10,
+      dx: 0,
+      dy: 0
+    };
 
-    // Goal
-    const goal = { x: 550, y: 150, w: 40, h: 100 };
+    // Goal (right side)
+    const goal = { x: canvas.width - 60, y: canvas.height/2 - 60, w: 40, h: 120 };
 
     // Keys
     const keys = {};
+    document.addEventListener('keydown', e => { keys[e.key] = true; e.preventDefault && e.key !== ' ' && e.preventDefault(); });
+    document.addEventListener('keyup', e => { keys[e.key] = false; });
 
-    document.addEventListener("keydown", e => keys[e.key] = true);
-    document.addEventListener("keyup", e => keys[e.key] = false);
+    // Utility: normalize angle from dx/dy
+    function angleFromDirection(dx, dy) {
+      return Math.atan2(dy, dx);
+    }
 
+    // Update logic
     function update() {
-      // Movement
-      if(keys["ArrowUp"]) { player.y -= player.speed; player.dir = -Math.PI/2; }
-      if(keys["ArrowDown"]) { player.y += player.speed; player.dir = Math.PI/2; }
-      if(keys["ArrowLeft"]) { player.x -= player.speed; player.dir = Math.PI; }
-      if(keys["ArrowRight"]) { player.x += player.speed; player.dir = 0; }
+      // Movement and facing
+      let moved = false;
+      if (keys['ArrowUp'])    { player.y -= player.speed; player.dir = -Math.PI/2; player.facing = 'up'; moved = true; }
+      if (keys['ArrowDown'])  { player.y += player.speed; player.dir = Math.PI/2; player.facing = 'down'; moved = true; }
+      if (keys['ArrowLeft'])  { player.x -= player.speed; player.dir = Math.PI; player.facing = 'left'; moved = true; }
+      if (keys['ArrowRight']) { player.x += player.speed; player.dir = 0; player.facing = 'right'; moved = true; }
 
-      // Keep inside canvas
-      player.x = Math.max(player.r, Math.min(canvas.width - player.r, player.x));
-      player.y = Math.max(player.r, Math.min(canvas.height - player.r, player.y));
-
-      // Collision with puck (soft push)
-      const dx = player.x - puck.x;
-      const dy = player.y - puck.y;
-      const dist = Math.sqrt(dx*dx + dy*dy);
-      if(dist < player.r + puck.r) {
-        puck.dx = -dx * 0.1;
-        puck.dy = -dy * 0.1;
+      // Diagonals: adjust dir to actual composite direction
+      let vx = (keys['ArrowRight'] ? 1 : 0) - (keys['ArrowLeft'] ? 1 : 0);
+      let vy = (keys['ArrowDown'] ? 1 : 0) - (keys['ArrowUp'] ? 1 : 0);
+      if (vx !== 0 || vy !== 0) {
+        player.dir = angleFromDirection(vx, vy);
+        moved = true;
       }
 
-      // Shooting
-      if(keys[" "]) { // spacebar
-        const stickX = player.x + Math.cos(player.dir) * 30;
-        const stickY = player.y + Math.sin(player.dir) * 30;
-        const sdx = puck.x - stickX;
-        const sdy = puck.y - stickY;
+      // Boundaries
+      player.x = Math.max(20, Math.min(canvas.width - 20, player.x));
+      player.y = Math.max(30, Math.min(canvas.height - 30, player.y));
+
+      // Soft push if player overlaps puck area
+      const dx = puck.x - player.x;
+      const dy = puck.y - player.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const pushRadius = 28;
+      if (dist < pushRadius) {
+        // gently nudge the puck away from player center
+        puck.dx += (dx/dist) * 0.8;
+        puck.dy += (dy/dist) * 0.8;
+      }
+
+      // Shoot mechanic: spacebar
+      if (keys[' ']) {
+        // compute stick end position
+        const stickLen = 36;
+        const stickEndX = player.x + Math.cos(player.dir) * stickLen;
+        const stickEndY = player.y + Math.sin(player.dir) * stickLen;
+
+        const sdx = puck.x - stickEndX;
+        const sdy = puck.y - stickEndY;
         const sdist = Math.sqrt(sdx*sdx + sdy*sdy);
-        if(sdist < 20) {
-          puck.dx = Math.cos(player.dir) * 6;
-          puck.dy = Math.sin(player.dir) * 6;
+        if (sdist < 20) {
+          // impulse outward from stick
+          puck.dx = Math.cos(player.dir) * 8;
+          puck.dy = Math.sin(player.dir) * 8;
         }
       }
 
-      // Move puck
+      // Puck physics
       puck.x += puck.dx;
       puck.y += puck.dy;
-      puck.dx *= 0.98; // friction
-      puck.dy *= 0.98;
+      puck.dx *= 0.985; // friction
+      puck.dy *= 0.985;
 
-      // Bounce off walls
-      if(puck.x - puck.r < 0 || puck.x + puck.r > canvas.width) puck.dx *= -1;
-      if(puck.y - puck.r < 0 || puck.y + puck.r > canvas.height) puck.dy *= -1;
+      // Keep puck inside bounds (bounce softly)
+      if (puck.x - puck.r < 0) { puck.x = puck.r; puck.dx *= -0.6; }
+      if (puck.x + puck.r > canvas.width) { puck.x = canvas.width - puck.r; puck.dx *= -0.6; }
+      if (puck.y - puck.r < 0) { puck.y = puck.r; puck.dy *= -0.6; }
+      if (puck.y + puck.r > canvas.height) { puck.y = canvas.height - puck.r; puck.dy *= -0.6; }
 
       // Goal detection
-      if(puck.x + puck.r > goal.x && puck.y > goal.y && puck.y < goal.y + goal.h) {
-        alert("GOAL! 🥅🏒");
-        reset();
+      if (puck.x + puck.r > goal.x && puck.y > goal.y && puck.y < goal.y + goal.h) {
+        // simple goal reaction
+        setTimeout(() => alert('GOAL! 🥅'), 10);
+        resetPositions();
       }
     }
 
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Draw stick figure player
+    function drawPlayer(px, py, dir) {
+      // Parameters for figure
+      const headR = 9;
+      const bodyLen = 22;
+      const armLen = 18;
+      const legLen = 18;
 
-      // Goal
-      ctx.fillStyle = "red";
-      ctx.fillRect(goal.x, goal.y, goal.w, goal.h);
-
-      // Player
+      // Head
       ctx.beginPath();
-      ctx.arc(player.x, player.y, player.r, 0, Math.PI*2);
-      ctx.fillStyle = player.color;
+      ctx.arc(px, py - 18, headR, 0, Math.PI*2);
+      ctx.fillStyle = '#222';
       ctx.fill();
 
-      // Stick
-      ctx.strokeStyle = "brown";
-      ctx.lineWidth = 4;
+      // Body (line)
+      const bodyTopX = px;
+      const bodyTopY = py - 18 + headR;
+      const bodyBottomX = px;
+      const bodyBottomY = bodyTopY + bodyLen;
+      ctx.strokeStyle = '#222';
+      ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.moveTo(player.x, player.y);
-      ctx.lineTo(player.x + Math.cos(player.dir) * 30, player.y + Math.sin(player.dir) * 30);
+      ctx.moveTo(bodyTopX, bodyTopY);
+      ctx.lineTo(bodyBottomX, bodyBottomY);
       ctx.stroke();
 
-      // Puck
+      // Arms: left and right - draw relative, but one arm will hold stick
+      // compute stick end (right arm by default, rotated by dir)
+      const stickLen = 36;
+      const stickAngle = dir;
+      const stickStartX = px + Math.cos(stickAngle) * 6; // near chest
+      const stickStartY = py - 6 + Math.sin(stickAngle) * 6;
+      const stickEndX = px + Math.cos(stickAngle) * (6 + stickLen);
+      const stickEndY = py - 6 + Math.sin(stickAngle) * (6 + stickLen);
+
+      // left arm (simple)
+      ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(puck.x, puck.y, puck.r, 0, Math.PI*2);
-      ctx.fillStyle = "black";
-      ctx.fill();
+      ctx.moveTo(px - 12, py - 2);
+      ctx.lineTo(px - 2, py + 6);
+      ctx.stroke();
+
+      // right arm (holding stick)
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#5a3b1f'; // stick color
+      ctx.beginPath();
+      ctx.moveTo(px + 6, py - 2);
+      ctx.lineTo(stickEndX, stickEndY);
+      ctx.stroke();
+
+      // Legs
+      ctx.strokeStyle = '#222';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(bodyBottomX, bodyBottomY);
+      ctx.lineTo(bodyBottomX - 10, bodyBottomY + legLen);
+      ctx.moveTo(bodyBottomX, bodyBottomY);
+      ctx.lineTo(bodyBottomX + 10, bodyBottomY + legLen);
+      ctx.stroke();
+
+      // small skate rectangles
+      ctx.fillStyle = '#000';
+      ctx.fillRect(bodyBottomX - 14, bodyBottomY + legLen - 4, 20, 5);
     }
 
-    function reset() {
-      player.x = 100; player.y = 200;
-      puck.x = 300; puck.y = 200; puck.dx = 0; puck.dy = 0;
+    // Draw everything
+    function draw() {
+      // Clear
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+
+      // Draw rink background (simple)
+      // center line
+      ctx.fillStyle = '#eaf6ff';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+
+      // Goal (red box)
+      ctx.fillStyle = '#d33';
+      ctx.fillRect(goal.x, goal.y, goal.w, goal.h);
+
+      // Draw puck
+      ctx.beginPath();
+      ctx.arc(puck.x, puck.y, puck.r, 0, Math.PI*2);
+      ctx.fillStyle = '#111';
+      ctx.fill();
+
+      // Draw player (stick figure) at player.x, player.y
+      drawPlayer(player.x, player.y, player.dir);
+    }
+
+    function resetPositions() {
+      player.x = 120;
+      player.y = canvas.height / 2;
+      player.dir = 0;
+      puck.x = canvas.width / 2;
+      puck.y = canvas.height / 2;
+      puck.dx = 0;
+      puck.dy = 0;
     }
 
     function loop() {
@@ -178,6 +281,9 @@
       draw();
       requestAnimationFrame(loop);
     }
+
+    // initialize
+    resetPositions();
     loop();
   </script>
 </body>
