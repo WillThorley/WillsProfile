@@ -36,6 +36,8 @@
       background:#f9fafb;padding:12px;border-radius:8px;
       min-width:90px;text-align:center;
     }
+    table { width:100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { padding: 8px; border: 1px solid #ccc; text-align: left; }
     #gameCard { text-align:center; }
     #gameCanvas {
       background:#e5e7eb;
@@ -59,7 +61,6 @@
   </header>
 
   <main class="container">
-    <!-- New intro bio section -->
     <section class="card">
       <h2>About Me</h2>
       <p>
@@ -76,12 +77,26 @@
         <div><strong>Losses</strong><div id="losses">1</div></div>
         <div><strong>Ties</strong><div id="ties">2</div></div>
       </div>
-      <!-- Added MyHockeyRankings data -->
       <p>
         <strong>2025 Record:</strong> 2-1-2 (Wins-Losses-Ties)<br>
-        <strong>Goals:</strong> 14 For, 14 Against<br>
         <small>Source: <a href="https://www.myhockeyrankings.com/team_info.php?t=4488&y=2025" target="_blank">MyHockeyRankings</a></small>
       </p>
+
+      <h3>Past Games (2025)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Opponent</th><th>Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Wizards</td><td>L 1-5</td></tr>
+          <tr><td>Jr Bruins</td><td>T 3-3</td></tr>
+          <tr><td>Giants</td><td>W</td></tr>
+          <tr><td>Winter Club</td><td>W 4-3</td></tr>
+          <tr><td>Patriots</td><td>T 3-3</td></tr>
+        </tbody>
+      </table>
     </section>
 
     <section id="gameCard" class="card">
@@ -100,9 +115,8 @@
     </section>
   </main>
 
-  <!-- Your existing hockey game script goes here -->
   <script>
-    // (keeping your full game code here)
+    // (your hockey game logic here)
   </script>
 </body>
 </html>
