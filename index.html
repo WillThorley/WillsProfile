@@ -1,122 +1,109 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Will Thorley — Profile + Hockey Game</title>
-  <style>
-    :root{
-      --bg:#0b63d6;
-      --card:#fff;
-    }
-    body{
-      font-family:Inter,system-ui,Arial,sans-serif;
-      background:var(--bg);
-      color:#fff;
-      margin:0;
-    }
-    .corner-profile{
-      position:fixed;top:12px;right:12px;
-      display:flex;align-items:center;gap:8px;
-    }
-    .corner-profile img{
-      width:56px;height:56px;border-radius:50%;
-      border:2px solid rgba(255,255,255,0.6);
-      object-fit:cover;
-    }
-    .container{max-width:980px;margin:90px auto;padding:24px}
-    .card{
-      background:#fff;color:#000;
-      padding:18px;border-radius:12px;
-      box-shadow:0 6px 18px rgba(15,23,42,0.2);
-      margin-bottom:18px;
-    }
-    .stats-grid{display:flex;gap:18px;margin:12px 0}
-    .stats-grid>div{
-      background:#f9fafb;padding:12px;border-radius:8px;
-      min-width:90px;text-align:center;
-    }
-    table { width:100%; border-collapse: collapse; margin-top: 12px; }
-    th, td { padding: 8px; border: 1px solid #ccc; text-align: left; }
-    #gameCard { text-align:center; }
-    #gameCanvas {
-      background:#e5e7eb;
-      border:3px solid #333;
-      border-radius:8px;
-      display:block;margin:10px auto;
-    }
-    button {
-      background:#0b63d6;color:#fff;
-      padding:8px 16px;margin:4px;
-      border:none;border-radius:6px;
-      cursor:pointer;font-weight:600;
-    }
-    button:hover{background:#084a9c;}
-  </style>
-</head>
-<body>
-  <header class="corner-profile">
-    <img id="profilePic" src="assets/profile.jpg" alt="Will Thorley" />
-    <div id="profileName">Will Thorley</div>
-  </header>
+<script>
+let canvas = document.getElementById("gameCanvas");
+let ctx = canvas.getContext("2d");
 
-  <main class="container">
-    <section class="card">
-      <h2>About Me</h2>
-      <p>
-        I play for <strong>Boston Advantage 2012 Elite</strong>. 
-        I’ve also competed in the prestigious <strong>Quebec International Pee-Wee Tournament</strong> with the Flames, 
-        and played in <strong>The Brick Invitational</strong> with the Jr. Bruins.
-      </p>
-    </section>
+let gameRunning = false;
+let mode = "1p";
+let p1 = { x: 20, y: canvas.height/2 - 30, w: 10, h: 60, dy: 0 };
+let p2 = { x: canvas.width-30, y: canvas.height/2 - 30, w: 10, h: 60, dy: 0 };
+let puck = { x: canvas.width/2, y: canvas.height/2, r: 8, dx: 3, dy: 2 };
 
-    <section class="card">
-      <h2>Boston Advantage 2012 Elite — Season Summary</h2>
-      <div class="stats-grid">
-        <div><strong>Wins</strong><div id="wins">2</div></div>
-        <div><strong>Losses</strong><div id="losses">1</div></div>
-        <div><strong>Ties</strong><div id="ties">2</div></div>
-      </div>
-      <p>
-        <strong>2025 Record:</strong> 2-1-2 (Wins-Losses-Ties)<br>
-        <small>Source: <a href="https://www.myhockeyrankings.com/team_info.php?t=4488&y=2025" target="_blank">MyHockeyRankings</a></small>
-      </p>
+let p1Score = 0, p2Score = 0;
 
-      <h3>Past Games (2025)</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Opponent</th><th>Result</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td>Wizards</td><td>L 1-5</td></tr>
-          <tr><td>Jr Bruins</td><td>T 3-3</td></tr>
-          <tr><td>Giants</td><td>W</td></tr>
-          <tr><td>Winter Club</td><td>W 4-3</td></tr>
-          <tr><td>Patriots</td><td>T 3-3</td></tr>
-        </tbody>
-      </table>
-    </section>
+function startGame(selectedMode){
+  mode = selectedMode;
+  document.getElementById("menu").style.display = "none";
+  document.getElementById("scoreboard").style.display = "block";
+  resetPositions();
+  gameRunning = true;
+  requestAnimationFrame(gameLoop);
+}
 
-    <section id="gameCard" class="card">
-      <h2>Mini Hockey Game</h2>
-      <div id="menu">
-        <p>Select Mode:</p>
-        <button onclick="startGame('1p')">1 Player vs AI</button>
-        <button onclick="startGame('2p')">2 Players</button>
-      </div>
-      <div id="scoreboard" style="display:none;">
-        <strong>Player 1:</strong> <span id="p1Score">0</span> |
-        <strong>Player 2/AI:</strong> <span id="p2Score">0</span>
-        <button onclick="resetGame()">Home</button>
-      </div>
-      <canvas id="gameCanvas" width="500" height="300"></canvas>
-    </section>
-  </main>
+function resetGame(){
+  gameRunning = false;
+  document.getElementById("menu").style.display = "block";
+  document.getElementById("scoreboard").style.display = "none";
+  p1Score = p2Score = 0;
+  updateScoreboard();
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+}
 
-  <script>
-    // (your hockey game logic here)
-  </script>
-</body>
-</html>
+function resetPositions(){
+  p1.y = canvas.height/2 - p1.h/2;
+  p2.y = canvas.height/2 - p2.h/2;
+  puck.x = canvas.width/2;
+  puck.y = canvas.height/2;
+  puck.dx = (Math.random() > 0.5 ? 3 : -3);
+  puck.dy = (Math.random() > 0.5 ? 2 : -2);
+}
+
+function updateScoreboard(){
+  document.getElementById("p1Score").textContent = p1Score;
+  document.getElementById("p2Score").textContent = p2Score;
+}
+
+function gameLoop(){
+  if (!gameRunning) return;
+  
+  // move paddles
+  p1.y += p1.dy;
+  p2.y += p2.dy;
+  
+  // AI control for 1p mode
+  if (mode === "1p"){
+    if (puck.y < p2.y + p2.h/2) p2.y -= 3;
+    else if (puck.y > p2.y + p2.h/2) p2.y += 3;
+  }
+  
+  // move puck
+  puck.x += puck.dx;
+  puck.y += puck.dy;
+  
+  // bounce top/bottom
+  if (puck.y - puck.r < 0 || puck.y + puck.r > canvas.height) puck.dy *= -1;
+  
+  // check paddle collisions
+  if (puck.x - puck.r < p1.x + p1.w && puck.y > p1.y && puck.y < p1.y + p1.h) {
+    puck.dx *= -1;
+    puck.x = p1.x + p1.w + puck.r;
+  }
+  if (puck.x + puck.r > p2.x && puck.y > p2.y && puck.y < p2.y + p2.h) {
+    puck.dx *= -1;
+    puck.x = p2.x - puck.r;
+  }
+  
+  // scoring
+  if (puck.x < 0) {
+    p2Score++; updateScoreboard(); resetPositions();
+  }
+  if (puck.x > canvas.width) {
+    p1Score++; updateScoreboard(); resetPositions();
+  }
+  
+  // draw
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = "black";
+  ctx.fillRect(p1.x, p1.y, p1.w, p1.h);
+  ctx.fillRect(p2.x, p2.y, p2.w, p2.h);
+  ctx.beginPath();
+  ctx.arc(puck.x, puck.y, puck.r, 0, Math.PI*2);
+  ctx.fill();
+  
+  requestAnimationFrame(gameLoop);
+}
+
+// controls
+document.addEventListener("keydown", e=>{
+  if (e.key==="w") p1.dy = -4;
+  if (e.key==="s") p1.dy = 4;
+  if (mode==="2p"){
+    if (e.key==="ArrowUp") p2.dy = -4;
+    if (e.key==="ArrowDown") p2.dy = 4;
+  }
+});
+document.addEventListener("keyup", e=>{
+  if (e.key==="w"||e.key==="s") p1.dy = 0;
+  if (e.key==="ArrowUp"||e.key==="ArrowDown") p2.dy = 0;
+});
+</script>
+
