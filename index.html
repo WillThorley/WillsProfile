@@ -120,9 +120,9 @@
     const ctx = canvas.getContext("2d");
 
     let gameMode = null;
-    let p1 = {x:50,y:150,w:20,h:20,color:"blue",score:0};
-    let p2 = {x:430,y:150,w:20,h:20,color:"red",score:0};
-    let puck = {x:250,y:150,r:8,dx:0,dy:0};
+    let p1 = {x:80,y:150,color:"blue",score:0};
+    let p2 = {x:420,y:150,color:"red",score:0};
+    let puck = {x:250,y:150,r:6,dx:0,dy:0};
     let keys = {};
 
     function startGame(mode){
@@ -143,8 +143,8 @@
     }
 
     function resetPositions(){
-      p1.x=50;p1.y=150;
-      p2.x=430;p2.y=150;
+      p1.x=80;p1.y=150;
+      p2.x=420;p2.y=150;
       puck.x=250;puck.y=150;puck.dx=0;puck.dy=0;
     }
 
@@ -155,25 +155,25 @@
     }
 
     function update(){
-      // Move Player 1 (WASD)
+      // P1 movement (WASD)
       if(keys["w"]) p1.y-=3;
       if(keys["s"]) p1.y+=3;
       if(keys["a"]) p1.x-=3;
       if(keys["d"]) p1.x+=3;
 
-      // Move Player 2 (arrows or AI)
+      // P2 movement
       if(gameMode==="2p"){
         if(keys["ArrowUp"]) p2.y-=3;
         if(keys["ArrowDown"]) p2.y+=3;
         if(keys["ArrowLeft"]) p2.x-=3;
         if(keys["ArrowRight"]) p2.x+=3;
       } else {
-        // AI tracks puck
+        // simple AI follows puck
         if(puck.y < p2.y) p2.y-=2;
         if(puck.y > p2.y) p2.y+=2;
       }
 
-      // Shooting: space (P1), enter (P2)
+      // Shooting
       if(keys[" "]){
         shoot(p1);
       }
@@ -184,13 +184,13 @@
       // Update puck
       puck.x+=puck.dx;
       puck.y+=puck.dy;
-      puck.dx*=0.98; // friction
+      puck.dx*=0.98;
       puck.dy*=0.98;
 
-      // Bounce off walls
+      // Bounce top/bottom
       if(puck.y-puck.r<0 || puck.y+puck.r>canvas.height) puck.dy*=-1;
 
-      // Check goal
+      // Goals
       if(puck.x<0){
         p2.score++;
         document.getElementById("p2Score").textContent=p2.score;
@@ -204,36 +204,65 @@
     }
 
     function shoot(player){
-      // If puck is close to player, launch it
-      let dx=puck.x-(player.x+player.w/2);
-      let dy=puck.y-(player.y+player.h/2);
+      let dx=puck.x-player.x;
+      let dy=puck.y-player.y;
       let dist=Math.hypot(dx,dy);
-      if(dist<30){
+      if(dist<25){
         let angle=Math.atan2(dy,dx);
-        puck.dx=Math.cos(angle)*5;
-        puck.dy=Math.sin(angle)*5;
+        puck.dx=Math.cos(angle)*6;
+        puck.dy=Math.sin(angle)*6;
       }
+    }
+
+    function drawPlayer(p){
+      ctx.strokeStyle=p.color;
+      ctx.lineWidth=2;
+      // head
+      ctx.beginPath();
+      ctx.arc(p.x,p.y-10,6,0,Math.PI*2);
+      ctx.stroke();
+      // body
+      ctx.beginPath();
+      ctx.moveTo(p.x,p.y-4);
+      ctx.lineTo(p.x,p.y+16);
+      ctx.stroke();
+      // arms
+      ctx.beginPath();
+      ctx.moveTo(p.x-10,p.y);
+      ctx.lineTo(p.x+10,p.y);
+      ctx.stroke();
+      // legs
+      ctx.beginPath();
+      ctx.moveTo(p.x,p.y+16);
+      ctx.lineTo(p.x-8,p.y+28);
+      ctx.moveTo(p.x,p.y+16);
+      ctx.lineTo(p.x+8,p.y+28);
+      ctx.stroke();
+      // stick
+      ctx.beginPath();
+      ctx.moveTo(p.x+10,p.y+5);
+      ctx.lineTo(p.x+30,p.y+15);
+      ctx.lineTo(p.x+40,p.y+15);
+      ctx.stroke();
     }
 
     function draw(){
       ctx.clearRect(0,0,canvas.width,canvas.height);
 
-      // rink
+      // rink background
       ctx.fillStyle="#d1ecf9";
       ctx.fillRect(0,0,canvas.width,canvas.height);
 
       // center line
-      ctx.strokeStyle="#ff0000";
+      ctx.strokeStyle="red";
       ctx.beginPath();
       ctx.moveTo(canvas.width/2,0);
       ctx.lineTo(canvas.width/2,canvas.height);
       ctx.stroke();
 
       // draw players
-      ctx.fillStyle=p1.color;
-      ctx.fillRect(p1.x,p1.y,p1.w,p1.h);
-      ctx.fillStyle=p2.color;
-      ctx.fillRect(p2.x,p2.y,p2.w,p2.h);
+      drawPlayer(p1);
+      drawPlayer(p2);
 
       // puck
       ctx.fillStyle="black";
