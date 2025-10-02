@@ -40,7 +40,7 @@
     th, td { padding: 8px; border: 1px solid #ccc; text-align: left; }
     #gameCard { text-align:center; }
     #gameCanvas {
-      background:#e5e7eb;
+      background:#d1ecf9;
       border:3px solid #333;
       border-radius:8px;
       display:block;margin:10px auto;
@@ -116,7 +116,134 @@
   </main>
 
   <script>
-    // (your hockey game logic here)
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    let gameMode = null;
+    let p1 = {x:50,y:150,w:20,h:20,color:"blue",score:0};
+    let p2 = {x:430,y:150,w:20,h:20,color:"red",score:0};
+    let puck = {x:250,y:150,r:8,dx:0,dy:0};
+    let keys = {};
+
+    function startGame(mode){
+      gameMode = mode;
+      document.getElementById("menu").style.display="none";
+      document.getElementById("scoreboard").style.display="block";
+      resetPositions();
+      requestAnimationFrame(loop);
+    }
+
+    function resetGame(){
+      gameMode=null;
+      document.getElementById("menu").style.display="block";
+      document.getElementById("scoreboard").style.display="none";
+      p1.score=0;p2.score=0;
+      document.getElementById("p1Score").textContent=0;
+      document.getElementById("p2Score").textContent=0;
+    }
+
+    function resetPositions(){
+      p1.x=50;p1.y=150;
+      p2.x=430;p2.y=150;
+      puck.x=250;puck.y=150;puck.dx=0;puck.dy=0;
+    }
+
+    function loop(){
+      update();
+      draw();
+      if(gameMode) requestAnimationFrame(loop);
+    }
+
+    function update(){
+      // Move Player 1 (WASD)
+      if(keys["w"]) p1.y-=3;
+      if(keys["s"]) p1.y+=3;
+      if(keys["a"]) p1.x-=3;
+      if(keys["d"]) p1.x+=3;
+
+      // Move Player 2 (arrows or AI)
+      if(gameMode==="2p"){
+        if(keys["ArrowUp"]) p2.y-=3;
+        if(keys["ArrowDown"]) p2.y+=3;
+        if(keys["ArrowLeft"]) p2.x-=3;
+        if(keys["ArrowRight"]) p2.x+=3;
+      } else {
+        // AI tracks puck
+        if(puck.y < p2.y) p2.y-=2;
+        if(puck.y > p2.y) p2.y+=2;
+      }
+
+      // Shooting: space (P1), enter (P2)
+      if(keys[" "]){
+        shoot(p1);
+      }
+      if(keys["Enter"]){
+        shoot(p2);
+      }
+
+      // Update puck
+      puck.x+=puck.dx;
+      puck.y+=puck.dy;
+      puck.dx*=0.98; // friction
+      puck.dy*=0.98;
+
+      // Bounce off walls
+      if(puck.y-puck.r<0 || puck.y+puck.r>canvas.height) puck.dy*=-1;
+
+      // Check goal
+      if(puck.x<0){
+        p2.score++;
+        document.getElementById("p2Score").textContent=p2.score;
+        resetPositions();
+      }
+      if(puck.x>canvas.width){
+        p1.score++;
+        document.getElementById("p1Score").textContent=p1.score;
+        resetPositions();
+      }
+    }
+
+    function shoot(player){
+      // If puck is close to player, launch it
+      let dx=puck.x-(player.x+player.w/2);
+      let dy=puck.y-(player.y+player.h/2);
+      let dist=Math.hypot(dx,dy);
+      if(dist<30){
+        let angle=Math.atan2(dy,dx);
+        puck.dx=Math.cos(angle)*5;
+        puck.dy=Math.sin(angle)*5;
+      }
+    }
+
+    function draw(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+
+      // rink
+      ctx.fillStyle="#d1ecf9";
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+
+      // center line
+      ctx.strokeStyle="#ff0000";
+      ctx.beginPath();
+      ctx.moveTo(canvas.width/2,0);
+      ctx.lineTo(canvas.width/2,canvas.height);
+      ctx.stroke();
+
+      // draw players
+      ctx.fillStyle=p1.color;
+      ctx.fillRect(p1.x,p1.y,p1.w,p1.h);
+      ctx.fillStyle=p2.color;
+      ctx.fillRect(p2.x,p2.y,p2.w,p2.h);
+
+      // puck
+      ctx.fillStyle="black";
+      ctx.beginPath();
+      ctx.arc(puck.x,puck.y,puck.r,0,Math.PI*2);
+      ctx.fill();
+    }
+
+    document.addEventListener("keydown",e=>{keys[e.key]=true;});
+    document.addEventListener("keyup",e=>{keys[e.key]=false;});
   </script>
 </body>
 </html>
