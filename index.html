@@ -190,6 +190,10 @@
       // Bounce top/bottom
       if(puck.y-puck.r<0 || puck.y+puck.r>canvas.height) puck.dy*=-1;
 
+      // Collisions with players
+      handleCollision(p1);
+      handleCollision(p2);
+
       // Goals
       if(puck.x<0){
         p2.score++;
@@ -200,6 +204,23 @@
         p1.score++;
         document.getElementById("p1Score").textContent=p1.score;
         resetPositions();
+      }
+    }
+
+    function handleCollision(player){
+      let dx = puck.x - player.x;
+      let dy = puck.y - player.y;
+      let dist = Math.hypot(dx,dy);
+      let minDist = 18; // player radius
+
+      if(dist < minDist + puck.r){
+        let angle = Math.atan2(dy,dx);
+        let overlap = (minDist + puck.r) - dist;
+        puck.x += Math.cos(angle) * overlap;
+        puck.y += Math.sin(angle) * overlap;
+
+        puck.dx = Math.cos(angle) * 3;
+        puck.dy = Math.sin(angle) * 3;
       }
     }
 
